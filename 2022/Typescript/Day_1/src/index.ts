@@ -1,28 +1,38 @@
 #!/usr/bin/env node
 import fs from 'fs';
+import rl from 'readline';
+import { once } from 'events';
 
 const path: string = process.argv[2];
-fs.readFile(path, (error, data) => {
-	if(error) {
-		console.log(error);
-		return
-	}
-	const strData = data.toString();
-	const arr = strData.split('\n');
-	let highestArr = [0, 0, 0];
-	for(let i = 1, acc = 0; i < arr.length; i++) {
-		if (arr[i] === '') {
-			for (let i = 0; i < highestArr.length; i++) {
-				if (highestArr[i] === 0 || highestArr[i] < acc) {
-					highestArr[i] = acc;
-					highestArr.sort((a,b) => a > b ? 1 : -1);
-					break;
-				}
-			}
+
+async function getTopThree() {
+	const read = rl.createInterface({
+		input: fs.createReadStream(path),
+		crlfDelay: Infinity,
+	});
+
+	let acc = 0;
+	const calOnElf: Array<number> = [];
+	read.on('line', (line) => {
+		if (line === '') {
+			calOnElf.push(acc);
 			acc = 0;
 		} else {
-			acc += Number(arr[i]);
+			acc += Number(line);
 		}
-	}
-	console.log(highestArr.reduce((acc, elf) => acc + elf, 0));
-});
+	});
+
+	await once(read, 'close');
+	return calOnElf;
+}
+
+function getSum(arr: Array<number>) {
+	return arr.sort((a,b) => a < b ? 1 : -1).splice(0, 3).reduce((acc, elf) => acc + elf, 0);
+}
+
+(async function main() {
+	const arr = await getTopThree();
+
+	console.log(getSum(arr));
+})();
+
