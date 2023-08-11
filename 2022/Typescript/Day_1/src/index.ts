@@ -35,4 +35,3 @@ function getSum(arr: Array<number>) {
 
 	console.log(getSum(arr));
 })();
-
